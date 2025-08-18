@@ -52,7 +52,7 @@ setting_up_container() {
       break
     fi
     echo 1>&2 -en "${CROSS}${RD} No Network! "
-    sleep "$RETRY_EVERY"
+    sleep $RETRY_EVERY
   done
   if [ "$(hostname -I)" = "" ]; then
     echo 1>&2 -e "\n${CROSS}${RD} No Network After $RETRY_NUM Tries${CL}"
