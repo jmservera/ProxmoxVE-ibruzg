@@ -35,10 +35,10 @@ AllowInbound 1
 EOF
 TorTimeout=5
 #$STD systemctl -q start tor
-systemctl -q restart tor
 for i in $(seq 1 $TorTimeout); do
     if ss -tlnp | grep -q ":9050"; then
         msg_info "Tor is ready!"
+        break
     fi 
     echo "Waiting Tor... ($i/$TorTimeout)"
     if [ "$i" -eq $TorTimeout ]; then
