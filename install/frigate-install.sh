@@ -35,11 +35,11 @@ AllowInbound 1
 EOF
 TorTimeout=5
 #$STD systemctl -q start tor
-for i in $(seq 1 "$TorTimeout"); do
+for i in $(seq 1 $TorTimeout); do
   if ss -tlnp | grep -q ":9050"; then
     break
   fi
-  if [ "$i" -eq "$TorTimeout" ]; then
+  if [ "$i" -eq $TorTimeout ]; then
     msg_error "Tor didn't start in $TorTimeout seconds"
     exit 1
   fi
