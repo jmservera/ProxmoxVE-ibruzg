@@ -44,7 +44,7 @@ for i in $(seq 1 $TorTimeout); do
         msg_error "Tor did not start in $TorTimeout seconds"
         exit 1
     fi
-    echo "Waiting Tor... ($i/$TorTimeout)"
+    msg_info "Waiting Tor... ($i/$TorTimeout)"
     sleep 1
 done
 
