@@ -13,10 +13,8 @@ verb_ip6
 catch_errors
 setting_up_container
 network_check
-update_os
 motd_ssh
 customize
-
 
 $STD apt-get -qq install tor
 cat > /etc/tor/torsocks.conf << 'EOF'
@@ -37,18 +35,19 @@ AllowInbound 1
 EOF
 TorTimeout=5
 #$STD systemctl -q start tor
+systemctl -q restart tor
 for i in $(seq 1 $TorTimeout); do
-  if ss -tlnp | grep -q ":9050"; then
-    break
-  fi
-  if [ "$i" -eq $TorTimeout ]; then
-    msg_error "Tor didn't start in $TorTimeout seconds"
-    exit 1
-  fi
-  echo "Waiting Tor... ($i/$TorTimeout)"
-  sleep 1
+    if ss -tlnp | grep -q ":9050"; then
+        msg_info "Tor is ready!"
+    fi 
+    echo "Waiting Tor... ($i/$TorTimeout)"
+    if [ "$i" -eq $TorTimeout ]; then
+        msg_error "Tor did not start in $TorTimeout seconds"
+        exit 1
+    fi
+    sleep 1
 done
-msg_info "Tor started"
+
 exit 1
 
 msg_info "Installing Dependencies (Patience)"
