@@ -8,8 +8,6 @@
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 
-msg_error "MSG ERROR TEST"
-
 color
 verb_ip6
 catch_errors
@@ -74,9 +72,16 @@ TorPort 9050
 OnionAddrRange 127.42.42.0/24
 AllowInbound 1
 EOF
-$STD systemctl -q start tor
-until ss -tlnp | grep -q ":9050"; do
-  echo "Waiting Tor..."
+TorTimeout=5
+#$STD systemctl -q start tor
+for i in $(seq 1 $TorTimeout); do
+  if ss -tlnp | grep -q ":9050"; then
+    break
+  fi
+  if [ "$i" -eq $TorTimeout ]; then
+    msg_error "Tor didn't start in $TorTimeout seconds"
+    exit
+  fi
   sleep 1
 done
 $STD torify /opt/frigate/docker/main/install_deps.sh
