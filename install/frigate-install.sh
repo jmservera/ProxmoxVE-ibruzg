@@ -40,11 +40,11 @@ for i in $(seq 1 $TorTimeout); do
         msg_info "Tor is ready!"
         break
     fi 
-    echo "Waiting Tor... ($i/$TorTimeout)"
     if [ "$i" -eq $TorTimeout ]; then
         msg_error "Tor did not start in $TorTimeout seconds"
         exit 1
     fi
+    echo "Waiting Tor... ($i/$TorTimeout)"
     sleep 1
 done
 
