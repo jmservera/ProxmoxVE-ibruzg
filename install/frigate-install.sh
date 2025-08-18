@@ -46,6 +46,7 @@ for i in $(seq 1 "$TorTimeout"); do
   echo "Waiting Tor... ($i/$TorTimeout)"
   sleep 1
 done
+msg_info "Tor started"
 exit 1
 
 msg_info "Installing Dependencies (Patience)"
