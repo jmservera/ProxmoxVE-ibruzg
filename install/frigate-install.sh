@@ -10,19 +10,37 @@ source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 
 
 
+$STD apt-get -qq install tor
+cat > /etc/tor/torsocks.conf << 'EOF'
+SocksPort 9050
+DataDirectory /var/lib/tor
+User debian-tor
+ExitNodes {us},{gb},{ie},{nl},{de},{se},{ch}
+ExcludeNodes {cn},{ru},{ir},{kp},{by}
+ExcludeExitNodes {cn},{ru},{ir},{kp},{by}
+StrictNodes 0
+Log notice file /var/log/tor/tor.log
+EOF
+cat > /etc/tor/torsocks.conf << 'EOF'
+TorAddress 127.0.0.1
+TorPort 9050
+OnionAddrRange 127.42.42.0/24
+AllowInbound 1
+EOF
 TorTimeout=5
 #$STD systemctl -q start tor
-for i in $(seq 1 $TorTimeout); do
+for i in $(seq 1 "$TorTimeout"); do
   if ss -tlnp | grep -q ":9050"; then
     break
   fi
-  if [ "$i" -eq $TorTimeout ]; then
+  if [ "$i" -eq "$TorTimeout" ]; then
     msg_error "Tor didn't start in $TorTimeout seconds"
-    exit
+    exit 1
   fi
+  echo "Waiting Tor... ($i/$TorTimeout)"
   sleep 1
 done
-exit
+exit 1
 
 color
 verb_ip6
