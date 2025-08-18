@@ -8,6 +8,22 @@
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 
+
+
+TorTimeout=5
+#$STD systemctl -q start tor
+for i in $(seq 1 $TorTimeout); do
+  if ss -tlnp | grep -q ":9050"; then
+    break
+  fi
+  if [ "$i" -eq $TorTimeout ]; then
+    msg_error "Tor didn't start in $TorTimeout seconds"
+    exit
+  fi
+  sleep 1
+done
+exit
+
 color
 verb_ip6
 catch_errors
@@ -74,11 +90,11 @@ AllowInbound 1
 EOF
 TorTimeout=5
 #$STD systemctl -q start tor
-for i in $(seq 1 $TorTimeout); do
+for i in $(seq 1 "$TorTimeout"); do
   if ss -tlnp | grep -q ":9050"; then
     break
   fi
-  if [ "$i" -eq $TorTimeout ]; then
+  if [ "$i" -eq "$TorTimeout" ]; then
     msg_error "Tor didn't start in $TorTimeout seconds"
     exit
   fi
