@@ -7,6 +7,9 @@
 # Source: https://frigate.video/
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+
+msg_error "MSG ERROR TEST"
+
 color
 verb_ip6
 catch_errors
@@ -73,8 +76,8 @@ AllowInbound 1
 EOF
 $STD systemctl -q start tor
 until ss -tlnp | grep -q ":9050"; do
-    echo "Waiting Tor..."
-    sleep 1
+  echo "Waiting Tor..."
+  sleep 1
 done
 $STD torify /opt/frigate/docker/main/install_deps.sh
 systemctl -q stop tor
