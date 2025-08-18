@@ -34,7 +34,7 @@ OnionAddrRange 127.42.42.0/24
 AllowInbound 1
 EOF
 TorTimeout=5
-#$STD systemctl -q start tor
+$STD systemctl -q stop tor
 for i in $(seq 1 $TorTimeout); do
     if ss -tlnp | grep -q ":9050"; then
         msg_info "Tor is ready!"
