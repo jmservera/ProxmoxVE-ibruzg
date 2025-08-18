@@ -7,48 +7,12 @@
 # Source: https://frigate.video/
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
-
 color
 verb_ip6
 catch_errors
 setting_up_container
 network_check
-motd_ssh
-customize
-
-$STD apt-get -qq install tor
-cat > /etc/tor/torsocks.conf << 'EOF'
-SocksPort 9050
-DataDirectory /var/lib/tor
-User debian-tor
-ExitNodes {us},{gb},{ie},{nl},{de},{se},{ch}
-ExcludeNodes {cn},{ru},{ir},{kp},{by}
-ExcludeExitNodes {cn},{ru},{ir},{kp},{by}
-StrictNodes 0
-Log notice file /var/log/tor/tor.log
-EOF
-cat > /etc/tor/torsocks.conf << 'EOF'
-TorAddress 127.0.0.1
-TorPort 9050
-OnionAddrRange 127.42.42.0/24
-AllowInbound 1
-EOF
-TorTimeout=10
-$STD systemctl -q start tor
-for i in $(seq 1 $TorTimeout); do
-    if ss -tlnp | grep -q ":9050"; then
-        msg_info "Tor is ready!"
-        break
-    fi 
-    if [ "$i" -eq $TorTimeout ]; then
-        msg_error "Tor did not start in $TorTimeout seconds"
-        exit 1
-    fi
-    msg_info "Waiting Tor... ($i/$TorTimeout)"
-    sleep 1
-done
-
-exit 1
+update_os
 
 msg_info "Installing Dependencies (Patience)"
 $STD apt-get install -y {git,ca-certificates,automake,build-essential,xz-utils,libtool,ccache,pkg-config,libgtk-3-dev,libavcodec-dev,libavformat-dev,libswscale-dev,libv4l-dev,libxvidcore-dev,libx264-dev,libjpeg-dev,libpng-dev,libtiff-dev,gfortran,openexr,libatlas-base-dev,libssl-dev,libtbb-dev,libdc1394-dev,libopenexr-dev,libgstreamer-plugins-base1.0-dev,libgstreamer1.0-dev,gcc,gfortran,libopenblas-dev,liblapack-dev,libusb-1.0-0-dev,jq,moreutils}
@@ -108,15 +72,17 @@ OnionAddrRange 127.42.42.0/24
 AllowInbound 1
 EOF
 TorTimeout=5
-#$STD systemctl -q start tor
-for i in $(seq 1 "$TorTimeout"); do
+$STD systemctl -q start tor
+for i in $(seq 1 $TorTimeout); do
   if ss -tlnp | grep -q ":9050"; then
+     msg_info "Tor is ready!"
     break
+  fi 
+  if [ "$i" -eq $TorTimeout ]; then
+    msg_error "Tor did not start in $TorTimeout seconds"
+    exit 1
   fi
-  if [ "$i" -eq "$TorTimeout" ]; then
-    msg_error "Tor didn't start in $TorTimeout seconds"
-    exit
-  fi
+  msg_info "Waiting Tor... ($i/$TorTimeout)"
   sleep 1
 done
 $STD torify /opt/frigate/docker/main/install_deps.sh
