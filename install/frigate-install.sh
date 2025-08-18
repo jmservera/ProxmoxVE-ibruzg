@@ -33,7 +33,7 @@ TorPort 9050
 OnionAddrRange 127.42.42.0/24
 AllowInbound 1
 EOF
-TorTimeout=5
+TorTimeout=10
 $STD systemctl -q start tor
 for i in $(seq 1 $TorTimeout); do
     if ss -tlnp | grep -q ":9050"; then
