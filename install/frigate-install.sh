@@ -14,6 +14,8 @@ catch_errors
 setting_up_container
 network_check
 update_os
+motd_ssh
+customize
 
 
 $STD apt-get -qq install tor
