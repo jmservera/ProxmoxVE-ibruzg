@@ -75,14 +75,14 @@ TorTimeout=5
 $STD systemctl -q start tor
 for i in $(seq 1 $TorTimeout); do
   if ss -tlnp | grep -q ":9050"; then
-     msg_info "Tor is ready!"
+     $STD echo "Tor is ready!"
     break
   fi 
   if [ "$i" -eq $TorTimeout ]; then
-    msg_error "Tor did not start in $TorTimeout seconds"
+    $STD echo "Tor did not start in $TorTimeout seconds"
     exit 1
   fi
-  msg_info "Waiting Tor... ($i/$TorTimeout)"
+  $STD echo "Waiting Tor... ($i/$TorTimeout)"
   sleep 1
 done
 $STD torify /opt/frigate/docker/main/install_deps.sh
