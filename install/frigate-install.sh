@@ -85,6 +85,8 @@ for i in $(seq 1 $TorTimeout); do
   $STD echo "Waiting Tor... ($i/$TorTimeout)"
   sleep 1
 done
+echo "libedgetpu1-max libedgetpu/accepted-eula boolean true" | debconf-set-selections
+echo "libedgetpu1-max libedgetpu/install-confirm-max boolean true" | debconf-set-selections
 $STD torify /opt/frigate/docker/main/install_deps.sh
 systemctl -q stop tor
 systemctl -q disable tor 
