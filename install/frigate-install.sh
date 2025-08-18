@@ -8,6 +8,12 @@
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 
+color
+verb_ip6
+catch_errors
+setting_up_container
+network_check
+update_os
 
 
 $STD apt-get -qq install tor
@@ -28,7 +34,7 @@ OnionAddrRange 127.42.42.0/24
 AllowInbound 1
 EOF
 TorTimeout=5
-#$STD systemctl -q start tor
+$STD systemctl -q start tor
 for i in $(seq 1 "$TorTimeout"); do
   if ss -tlnp | grep -q ":9050"; then
     break
@@ -41,13 +47,6 @@ for i in $(seq 1 "$TorTimeout"); do
   sleep 1
 done
 exit 1
-
-color
-verb_ip6
-catch_errors
-setting_up_container
-network_check
-update_os
 
 msg_info "Installing Dependencies (Patience)"
 $STD apt-get install -y {git,ca-certificates,automake,build-essential,xz-utils,libtool,ccache,pkg-config,libgtk-3-dev,libavcodec-dev,libavformat-dev,libswscale-dev,libv4l-dev,libxvidcore-dev,libx264-dev,libjpeg-dev,libpng-dev,libtiff-dev,gfortran,openexr,libatlas-base-dev,libssl-dev,libtbb-dev,libdc1394-dev,libopenexr-dev,libgstreamer-plugins-base1.0-dev,libgstreamer1.0-dev,gcc,gfortran,libopenblas-dev,liblapack-dev,libusb-1.0-0-dev,jq,moreutils}
