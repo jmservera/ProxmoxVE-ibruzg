@@ -53,11 +53,7 @@ $STD pip3 wheel --wheel-dir=/wheels -r /opt/frigate/docker/main/requirements-whe
 cp -a /opt/frigate/docker/main/rootfs/. /
 export TARGETARCH="amd64"
 echo 'libc6 libraries/restart-without-asking boolean true' | debconf-set-selections
-
-
-
 # Intel has blocked access to its repository with drivers in some regions, for example, in Ukraine.
-
 $STD apt-get -qq install tor
 cat > /etc/tor/torsocks.conf << 'EOF'
 SocksPort 9050
@@ -85,11 +81,6 @@ systemctl -q stop tor
 systemctl -q disable tor 
 $STD apt-get -qq remove --purge tor 
 rm -rf /etc/tor /var/lib/tor /var/log/tor
-msg_ok "Uninstalled Tor"
-
-
-
-
 $STD apt update
 $STD ln -svf /usr/lib/btbn-ffmpeg/bin/ffmpeg /usr/local/bin/ffmpeg
 $STD ln -svf /usr/lib/btbn-ffmpeg/bin/ffprobe /usr/local/bin/ffprobe
@@ -122,7 +113,6 @@ cameras:
       width: 1920
       fps: 5
 EOF
-wget -q -O /media/frigate/person-bicycle-car-detection.mp4 https://raw.githubusercontent.com/intel-iot-devkit/sample-videos/master/person-bicycle-car-detection.mp4
 ln -sf /config/config.yml /opt/frigate/config/config.yml
 if [[ "$CTTYPE" == "0" ]]; then
   sed -i -e 's/^kvm:x:104:$/render:x:104:root,frigate/' -e 's/^render:x:105:root$/kvm:x:105:/' /etc/group
