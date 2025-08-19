@@ -137,23 +137,21 @@ fi
 echo "tmpfs   /tmp/cache      tmpfs   defaults        0       0" >>/etc/fstab
 msg_ok "Installed Frigate"
 
-if grep -q -o -m1 -E 'avx[^ ]*' /proc/cpuinfo; then
-  msg_ok "AVX Support Detected"
-  msg_info "Installing Openvino Object Detection Model (Resilience)"
-  $STD pip install -r /opt/frigate/docker/main/requirements-ov.txt
-  cd /opt/frigate/models
-  export ENABLE_ANALYTICS=NO
-  $STD /usr/local/bin/omz_downloader --name ssdlite_mobilenet_v2 --num_attempts 2
-  $STD /usr/local/bin/omz_converter --name ssdlite_mobilenet_v2 --precision FP16 --mo /usr/local/bin/mo
-  cd /
-  cp -r /opt/frigate/models/public/ssdlite_mobilenet_v2 openvino-model
-  curl -fsSL "https://github.com/openvinotoolkit/open_model_zoo/raw/master/data/dataset_classes/coco_91cl_bkgr.txt" -o "openvino-model/coco_91cl_bkgr.txt"
-  sed -i 's/truck/car/g' openvino-model/coco_91cl_bkgr.txt
-  cat <<EOF >>/config/config.yml
+msg_info "Installing Openvino Object Detection Model (Resilience)"
+$STD pip install -r /opt/frigate/docker/main/requirements-ov.txt
+cd /opt/frigate/models
+export ENABLE_ANALYTICS=NO
+$STD /usr/local/bin/omz_downloader --name ssdlite_mobilenet_v2 --num_attempts 2
+$STD /usr/local/bin/omz_converter --name ssdlite_mobilenet_v2 --precision FP16 --mo /usr/local/bin/mo
+cd /
+cp -r /opt/frigate/models/public/ssdlite_mobilenet_v2 openvino-model
+curl -fsSL "https://github.com/openvinotoolkit/open_model_zoo/raw/master/data/dataset_classes/coco_91cl_bkgr.txt" -o "openvino-model/coco_91cl_bkgr.txt"
+sed -i 's/truck/car/g' openvino-model/coco_91cl_bkgr.txt
+cat <<EOF >>/config/config.yml
 detectors:
   ov:
     type: openvino
-    device: CPU
+    device: GPU
     model:
       path: /openvino-model/FP16/ssdlite_mobilenet_v2.xml
 model:
@@ -163,13 +161,7 @@ model:
   input_pixel_format: bgr
   labelmap_path: /openvino-model/coco_91cl_bkgr.txt
 EOF
-  msg_ok "Installed Openvino Object Detection Model"
-else
-  cat <<EOF >>/config/config.yml
-model:
-  path: /cpu_model.tflite
-EOF
-fi
+msg_ok "Installed Openvino Object Detection Model"
 
 msg_info "Installing Coral Object Detection Model (Patience)"
 cd /opt/frigate
