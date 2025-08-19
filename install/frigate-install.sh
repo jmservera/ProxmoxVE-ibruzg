@@ -163,36 +163,6 @@ model:
 EOF
 msg_ok "Installed Openvino Object Detection Model"
 
-msg_info "Installing Coral Object Detection Model (Patience)"
-cd /opt/frigate
-export CCACHE_DIR=/root/.ccache
-export CCACHE_MAXSIZE=2G
-curl -fsSL "https://github.com/libusb/libusb/archive/v1.0.26.zip" -o "v1.0.26.zip"
-$STD unzip v1.0.26.zip
-rm v1.0.26.zip
-cd libusb-1.0.26
-$STD ./bootstrap.sh
-$STD ./configure --disable-udev --enable-shared
-$STD make -j $(nproc --all)
-cd /opt/frigate/libusb-1.0.26/libusb
-mkdir -p /usr/local/lib
-$STD /bin/bash ../libtool --mode=install /usr/bin/install -c libusb-1.0.la '/usr/local/lib'
-mkdir -p /usr/local/include/libusb-1.0
-$STD /usr/bin/install -c -m 644 libusb.h '/usr/local/include/libusb-1.0'
-ldconfig
-cd /
-curl -fsSL "https://github.com/google-coral/test_data/raw/release-frogfish/ssdlite_mobiledet_coco_qat_postprocess_edgetpu.tflite" -o "edgetpu_model.tflite"
-curl -fsSL "https://github.com/google-coral/test_data/raw/release-frogfish/ssdlite_mobiledet_coco_qat_postprocess.tflite" -o "cpu_model.tflite"
-cp /opt/frigate/labelmap.txt /labelmap.txt
-curl -fsSL "https://www.kaggle.com/api/v1/models/google/yamnet/tfLite/classification-tflite/1/download" -o "yamnet-tflite-classification-tflite-v1.tar.gz"
-tar xzf yamnet-tflite-classification-tflite-v1.tar.gz
-rm -rf yamnet-tflite-classification-tflite-v1.tar.gz
-mv 1.tflite cpu_audio_model.tflite
-cp /opt/frigate/audio-labelmap.txt /audio-labelmap.txt
-mkdir -p /media/frigate
-curl -fsSL "https://github.com/intel-iot-devkit/sample-videos/raw/master/person-bicycle-car-detection.mp4" -o "/media/frigate/person-bicycle-car-detection.mp4"
-msg_ok "Installed Coral Object Detection Model"
-
 msg_info "Building Nginx with Custom Modules"
 #Fix for xlc 
 sed -i 's/if \[\[ "$VERSION_ID" == "12" \]\]; then/if [[ -f \/etc\/apt\/sources.list.d\/debian.sources ]]; then/' /opt/frigate/docker/main/build_nginx.sh
