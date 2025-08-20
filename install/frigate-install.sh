@@ -128,6 +128,7 @@ cameras:
       width: 1920
       fps: 5
 EOF
+mkdir -p /media/frigate
 wget -O /media/frigate/person-bicycle-car-detection.mp4 https://github.com/intel-iot-devkit/sample-videos/raw/refs/heads/master/person-bicycle-car-detection.mp4
 ln -sf /config/config.yml /opt/frigate/config/config.yml
 if [[ "$CTTYPE" == "0" ]]; then
