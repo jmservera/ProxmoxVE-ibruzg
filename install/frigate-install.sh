@@ -35,11 +35,11 @@ msg_ok "Installed go2rtc"
 
 msg_info "Setting Up Hardware Acceleration"
 $STD apt-get -y install {va-driver-all,ocl-icd-libopencl1,intel-opencl-icd,vainfo,intel-gpu-tools}
-if [[ "$CTTYPE" == "0" ]]; then
-  chgrp video /dev/dri
-  chmod 755 /dev/dri
-  chmod 660 /dev/dri/*
-fi
+#if [[ "$CTTYPE" == "0" ]]; then
+#  chgrp video /dev/dri
+#  chmod 755 /dev/dri
+#  chmod 660 /dev/dri/*
+#fi
 msg_ok "Set Up Hardware Acceleration"
 
 msg_info "Installing Frigate v0.16.0 (Perseverance)"
@@ -131,11 +131,11 @@ EOF
 mkdir -p /media/frigate
 wget -O /media/frigate/person-bicycle-car-detection.mp4 https://github.com/intel-iot-devkit/sample-videos/raw/refs/heads/master/person-bicycle-car-detection.mp4
 ln -sf /config/config.yml /opt/frigate/config/config.yml
-if [[ "$CTTYPE" == "0" ]]; then
-  sed -i -e 's/^kvm:x:104:$/render:x:104:root,frigate/' -e 's/^render:x:105:root$/kvm:x:105:/' /etc/group
-else
-  sed -i -e 's/^kvm:x:104:$/render:x:104:frigate/' -e 's/^render:x:105:$/kvm:x:105:/' /etc/group
-fi
+#if [[ "$CTTYPE" == "0" ]]; then
+#  sed -i -e 's/^kvm:x:104:$/render:x:104:root,frigate/' -e 's/^render:x:105:root$/kvm:x:105:/' /etc/group
+#else
+#  sed -i -e 's/^kvm:x:104:$/render:x:104:frigate/' -e 's/^render:x:105:$/kvm:x:105:/' /etc/group
+#fi
 echo "tmpfs   /tmp/cache      tmpfs   defaults        0       0" >>/etc/fstab
 msg_ok "Installed Frigate"
 
