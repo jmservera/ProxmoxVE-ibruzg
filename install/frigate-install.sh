@@ -266,6 +266,7 @@ systemctl enable -q --now nginx
 msg_ok "Configured Services"
 
 git clone https://github.com/ibruzg/frigate-scripts.git /opt/frigate-scripts/
+chmod +x /opt/frigate-scripts/import-fr-detr/add-rf-detr.sh
 msg_info "Use /opt/frigate-scripts/import-fr-detr/add-rf-detr.sh script to import D-FINE model for use with OpenVINO"
 
 motd_ssh
