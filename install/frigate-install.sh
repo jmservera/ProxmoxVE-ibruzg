@@ -265,9 +265,8 @@ EOF
 systemctl enable -q --now nginx
 msg_ok "Configured Services"
 
-curl -fsSL "https://github.com/ibruzg/frigate-scripts/archive/refs/tags/v1.0.0.tar.gz" -o "frigate-scripts.tar.gz"
-tar -xzf frigate-scripts.tar.gz -C /opt/frigate-scripts --strip-components 1
-rm -rf frigate-scripts.tar.gz
+git clone https://github.com/ibruzg/frigate-scripts.git /opt/frigate-scripts/
+msg_info "Use /opt/frigate-scripts/import-fr-detr/add-rf-detr.sh script to import D-FINE model for use with OpenVINO"
 
 motd_ssh
 customize
