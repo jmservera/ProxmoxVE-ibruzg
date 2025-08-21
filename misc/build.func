@@ -15,13 +15,14 @@ variables() {
   CT_TYPE=${var_unprivileged:-$CT_TYPE}
 }
 
-source <(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/misc/api.func)
+source <(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/api.func)
+source <(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/gpu-selector.func)
 
 if command -v curl >/dev/null 2>&1; then
-  source <(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/misc/core.func)
+  source <(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/core.func)
   load_functions
 elif command -v wget >/dev/null 2>&1; then
-  source <(wget -qO- https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/misc/core.func)
+  source <(wget -qO- https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/core.func)
   load_functions
 fi
 # This function enables error handling in the script by setting options and defining a trap for the ERR signal.
@@ -32,7 +33,7 @@ catch_errors() {
 
 # This function is called when an error occurs. It receives the exit code, line number, and command that caused the error, and displays an error message.
 error_handler() {
-  source /dev/stdin <<<$(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/misc/api.func)
+  source /dev/stdin <<<$(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/api.func)
   printf "\e[?25h"
   local exit_code="$?"
   local line_number="$1"
@@ -988,7 +989,7 @@ install_script() {
       header_info
       echo -e "${INFO}${HOLD} ${GN}Using Config File on node $PVEHOST_NAME${CL}"
       METHOD="config_file"
-      source <(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/misc/config-file.func)
+      source <(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/config-file.func)
       config_file
       break
       ;;
@@ -1059,7 +1060,7 @@ check_container_storage() {
 }
 
 start() {
-  source <(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/misc/tools.func)
+  source <(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/tools.func)
   if command -v pveversion >/dev/null 2>&1; then
     install_script
   else
@@ -1120,9 +1121,9 @@ build_container() {
   TEMP_DIR=$(mktemp -d)
   pushd "$TEMP_DIR" >/dev/null
   if [ "$var_os" == "alpine" ]; then
-    export FUNCTIONS_FILE_PATH="$(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/misc/alpine-install.func)"
+    export FUNCTIONS_FILE_PATH="$(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/alpine-install.func)"
   else
-    export FUNCTIONS_FILE_PATH="$(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/misc/install.func)"
+    export FUNCTIONS_FILE_PATH="$(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/install.func)"
   fi
 
   export DIAGNOSTICS="$DIAGNOSTICS"
@@ -1157,7 +1158,7 @@ build_container() {
     $PW
   "
   # This executes create_lxc.sh and creates the container and .conf file
-  bash -c "$(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/misc/create_lxc.sh)" $?
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/create_lxc.sh)" $?
 
   LXC_CONFIG="/etc/pve/lxc/${CTID}.conf"
 
@@ -1202,7 +1203,8 @@ EOF
     fi
   done
 
-  if ([ "$CT_TYPE" == "0" ] || [ "$is_vaapi_app" == "true" ]) &&
+  if ([ "$CT_TYPE" == "0" ] || [ "$is_vaapi_app" == "true" ]) && 
+    ([ "$APP" != "Frigate" ]) &&
     ([[ -e /dev/dri/renderD128 ]] || [[ -e /dev/dri/card0 ]] || [[ -e /dev/fb0 ]]); then
 
     echo ""
@@ -1234,14 +1236,16 @@ EOF
         }
       else
         # UNPRV Container → nur devX für UI
-        [[ -e /dev/dri/card0 ]] && echo "dev0: /dev/dri/card0,gid=44" >>"$LXC_CONFIG"
-        [[ -e /dev/dri/card1 ]] && echo "dev0: /dev/dri/card1,gid=44" >>"$LXC_CONFIG"
-        [[ -e /dev/dri/renderD128 ]] && echo "dev1: /dev/dri/renderD128,gid=104" >>"$LXC_CONFIG"
+        if [ "$APP" != "Frigate" ]; then
+          [[ -e /dev/dri/card0 ]] && echo "dev0: /dev/dri/card0,gid=44" >>"$LXC_CONFIG"
+          [[ -e /dev/dri/card1 ]] && echo "dev0: /dev/dri/card1,gid=44" >>"$LXC_CONFIG"
+          [[ -e /dev/dri/renderD128 ]] && echo "dev1: /dev/dri/renderD128,gid=104" >>"$LXC_CONFIG"
+        fi
       fi
     fi
 
   fi
-  if [ "$CT_TYPE" == "1" ] && [ "$is_vaapi_app" == "true" ]; then
+  if [ "$CT_TYPE" == "1" ] && [ "$is_vaapi_app" == "true" ] && [ "$APP" != "Frigate" ]; then
     if [[ -e /dev/dri/card0 ]]; then
       echo "dev0: /dev/dri/card0,gid=44" >>"$LXC_CONFIG"
     elif [[ -e /dev/dri/card1 ]]; then
@@ -1250,6 +1254,30 @@ EOF
     if [[ -e /dev/dri/renderD128 ]]; then
       echo "dev1: /dev/dri/renderD128,gid=104" >>"$LXC_CONFIG"
     fi
+  fi
+
+  #For Frigate, map GPU by default 
+  if [[ "$APP" == "Frigate" && (-e /dev/dri/renderD128 || -e /dev/dri/card0) ]]; then
+    local device_count=$(ls -la /dev/dri/ 2>/dev/null | grep -c "^c")
+    if [[ $device_count -gt 2 ]]; then 
+      if select_gpu; then
+        local dev_index=0
+        for device in "${PASSTHROUGH_GPU_RESULT[@]}"; do
+          # Get appropriate GID based on device type
+          local gid=44  # default video group
+          if [[ "$device" =~ ^renderD[0-9]+$ ]]; then
+            gid=104  # render group
+          fi
+          echo "dev${dev_index}: /dev/dri/${device},gid=${gid}" >>"$LXC_CONFIG"
+          dev_index=$((dev_index + 1))
+        done
+      fi
+    else
+      if select_gpu "card0" "renderD128"; then
+        echo "dev0: /dev/dri/card0,gid=44" >>"$LXC_CONFIG"
+        echo "dev1: /dev/dri/renderD128,gid=104" >>"$LXC_CONFIG"
+      fi
+    fi 
   fi
 
   # TUN device passthrough
@@ -1350,7 +1378,7 @@ EOF'
   fi
   msg_ok "Customized LXC Container"
 
-  lxc-attach -n "$CTID" -- bash -c "$(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/install/${var_install}.sh)"
+  lxc-attach -n "$CTID" -- bash -c "$(curl -fsSL https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/install/${var_install}.sh)"
 }
 
 # This function sets the description of the container.
@@ -1362,7 +1390,7 @@ description() {
     cat <<EOF
 <div align='center'>
   <a href='https://Helper-Scripts.com' target='_blank' rel='noopener noreferrer'>
-    <img src='https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx/misc/images/logo-81x112.png' alt='Logo' style='width:81px;height:112px;'/>
+    <img src='https://raw.githubusercontent.com/ibruzg/ProxmoxVE/refs/heads/frigate-0.16.0-onx-sriov/misc/images/logo-81x112.png' alt='Logo' style='width:81px;height:112px;'/>
   </a>
 
   <h2 style='font-size: 24px; margin: 20px 0;'>${APP} LXC</h2>
