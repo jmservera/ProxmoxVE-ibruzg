@@ -88,9 +88,6 @@ function select_gpu() {
   local WIDTH=$((MAX_WIDTH + 15))
 
   while true; do
-    # Clear screen before showing dialog to prevent text overlap
-    clear 2>/dev/null || true
-    
     local SELECTED_DEVICES
     SELECTED_DEVICES=$(whiptail --backtitle "Proxmox VE Helper Scripts" \
       --title "GPU Devices" \
