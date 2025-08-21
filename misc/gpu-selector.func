@@ -1,0 +1,127 @@
+#!/bin/bash
+
+
+# Helper function to get gpu device info
+function get_device_info() {
+  local device_name="$1"
+  
+  if [ ! -e "/dev/dri/$device_name" ]; then
+    return 1
+  fi
+  
+  # Get owner from ls
+  local owner
+  if ls -la "/dev/dri/$device_name" 2>/dev/null | grep -q "^c"; then
+    owner=$(ls -la "/dev/dri/$device_name" 2>/dev/null | awk '{print $3":"$4}')
+  else
+    return 1
+  fi
+  
+  # Get numeric UID:GID
+  local uid_gid=$(stat -c "%u:%g" "/dev/dri/$device_name" 2>/dev/null)
+  
+  echo "Owner: $owner ($uid_gid)"
+  return 0
+}
+
+function select_gpu() {
+  local devices=("$@")
+
+  # If specific devices provided, select them directly
+  if [ ${#devices[@]} -gt 0 ]; then
+    PASSTHROUGH_GPU_RESULT=()
+    local missing_devices=()
+    
+    # Check each specified device
+    for device in "${devices[@]}"; do
+      if get_device_info "$device" >/dev/null; then
+        local device_info=$(get_device_info "$device" "full")
+        PASSTHROUGH_GPU_RESULT+=("$device")
+        msg_ok "Found device: $device (/dev/dri/$device) $device_info"
+      else
+        missing_devices+=("$device")
+      fi
+    done
+    
+    # Report missing devices
+    if [ ${#missing_devices[@]} -gt 0 ]; then
+      msg_error "Missing devices: ${missing_devices[*]}"
+      if [ ${#PASSTHROUGH_GPU_RESULT[@]} -eq 0 ]; then
+        return 2
+      fi
+    fi
+    
+    msg_ok "Selected ${#PASSTHROUGH_GPU_RESULT[@]} GPU device(s): ${PASSTHROUGH_GPU_RESULT[*]}"
+    return 0
+  fi
+
+  local -A DEVICE_MAP
+  local -a MENU
+  local COL_WIDTH=0
+
+  # Parse /dev/dri devices and populate menu items
+  while IFS= read -r device_line; do
+    # Extract device name from ls -la output
+    local device_name=$(echo "$device_line" | awk '{print $NF}')
+    [[ -n "$device_name" ]] || continue
+    [[ "$device_name" =~ ^(card|renderD)[0-9]+$ ]] || continue
+
+    # Use helper function to get  device info
+    if device_info=$(get_device_info "$device_name" "full"); then
+      DEVICE_MAP["$device_name"]="$device_name"
+      MENU+=("$device_name" "$device_info" "OFF")
+    fi
+  
+  done < <(ls -la /dev/dri/ 2>/dev/null | grep "^c")
+
+  if [ ${#MENU[@]} -eq 0 ]; then
+    msg_error "No GPU devices found in /dev/dri/."
+    return 2
+  fi
+
+  # Caclulate Menu width
+  local MAX_WIDTH=0
+  for ((i = 0; i < ${#MENU[@]}; i += 3)); do
+    local combined_length=$((${#MENU[$i]} + ${#MENU[$i+1]} + 5))
+    ((combined_length > MAX_WIDTH)) && MAX_WIDTH=$combined_length
+  done
+  local WIDTH=$((MAX_WIDTH + 15))
+
+  while true; do
+    # Clear screen before showing dialog to prevent text overlap
+    clear 2>/dev/null || true
+    
+    local SELECTED_DEVICES
+    SELECTED_DEVICES=$(whiptail --backtitle "Proxmox VE Helper Scripts" \
+      --title "GPU Devices" \
+      --checklist "Select GPU devices to use:\n(Space to select, Tab to move)" \
+      20 "$WIDTH" 10 "${MENU[@]}" 3>&1 1>&2 2>&3)
+
+    # Cancel or ESC
+    [[ $? -ne 0 ]] && exit_script
+
+    if [[ -z "$SELECTED_DEVICES" ]]; then
+      whiptail --msgbox "No GPU devices selected. Please select at least one device." 0 0
+      continue
+    fi
+
+    # Parse selected devices
+    PASSTHROUGH_GPU_RESULT=()
+    eval set -- "$SELECTED_DEVICES"
+    for device_display; do
+      [[ -n "$device_display" ]] || continue
+      device_display=$(echo "$device_display" | sed 's/^"//;s/"$//')
+      if [[ -n "${DEVICE_MAP[$device_display]:-}" ]]; then
+        PASSTHROUGH_GPU_RESULT+=("${DEVICE_MAP[$device_display]}")
+      fi
+    done
+
+    # Show selection confirmation
+    msg_ok "Selected ${#PASSTHROUGH_GPU_RESULT[@]} GPU device(s): ${PASSTHROUGH_GPU_RESULT[*]}"
+    for device in "${PASSTHROUGH_GPU_RESULT[@]}"; do
+      msg_ok "  Device path: /dev/dri/$device"
+    done
+    
+    return 0
+  done
+}
