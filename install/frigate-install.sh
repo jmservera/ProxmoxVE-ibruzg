@@ -53,7 +53,9 @@ $STD pip3 wheel --wheel-dir=/wheels -r /opt/frigate/docker/main/requirements-whe
 cp -a /opt/frigate/docker/main/rootfs/. /
 export TARGETARCH="amd64"
 echo 'libc6 libraries/restart-without-asking boolean true' | debconf-set-selections
+
 # Intel has blocked access to its repository with drivers in some regions, for example, in Ukraine.
+msg_info "Installing Tor"
 $STD apt-get -qq install tor
 cat > /etc/tor/torrc << 'EOF'
 SocksPort 9050
@@ -79,12 +81,14 @@ for i in $(seq 1 $TorTimeout); do
     break
   fi 
   if [ "$i" -eq $TorTimeout ]; then
-    $STD echo "Tor did not start in $TorTimeout seconds"
+    msg_error "Tor did not start in $TorTimeout seconds"
     exit 1
   fi
   $STD echo "Waiting Tor... ($i/$TorTimeout)"
   sleep 1
 done
+msg_ok "Installed Tor"
+
 if [[ "${VERBOSE}" == "no" ]]; then
   sed -i '/^.*unset DEBIAN_FRONTEND.*$/d' /opt/frigate/docker/main/install_deps.sh
   export DEBIAN_FRONTEND=noninteractive
