@@ -55,7 +55,7 @@ export TARGETARCH="amd64"
 echo 'libc6 libraries/restart-without-asking boolean true' | debconf-set-selections
 # Intel has blocked access to its repository with drivers in some regions, for example, in Ukraine.
 $STD apt-get -qq install tor
-cat > /etc/tor/torsocks.conf << 'EOF'
+cat > /etc/tor/torrc << 'EOF'
 SocksPort 9050
 DataDirectory /var/lib/tor
 User debian-tor
